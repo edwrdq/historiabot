@@ -1,0 +1,19 @@
+# --- Secrets ---
+# CRITICAL: Ignore the environment file containing API keys.
+.env
+
+# --- Virtual Environment ---
+# Ignore the virtual environment folder. This is large, system-specific,
+# and can be recreated from a requirements file.
+venv/
+
+# --- Python Cache ---
+# Ignore compiled Python files and cache folders.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- IDE / Editor specific files ---
+# Ignore VSCodium/VSCode configuration folder.
+.vscode/
