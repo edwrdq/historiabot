@@ -17,7 +17,7 @@ print("... Environment variables loaded successfully.")
 try:
     print("Configuring Google AI...")
     genai.configure(api_key=GEMMA_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemma-3-27b-it')
     print("... Google AI configured successfully.")
 except Exception as e:
     print(f"!!! FATAL ERROR: Could not configure Google AI. Error: {e}")
