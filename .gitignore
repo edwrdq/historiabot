@@ -2,6 +2,7 @@
 # CRITICAL: Ignore the environment file containing API keys.
 .env
 
+
 # --- Virtual Environment ---
 # Ignore the virtual environment folder. This is large, system-specific,
 # and can be recreated from a requirements file.
