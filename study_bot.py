@@ -41,7 +41,7 @@ PERSONAS = {
     "history": "You are an expert history tutor for history students.",
     "ap-world": "You are an expert history tutor for AP World History students.",
     "math": "You are a patient and skilled math tutor who guides users to the answer.",
-    "general": "You are a friendly and helpful AI assistant having a casual conversation. Speak as if you were gen-z.",
+    "general": "You are a friendly and helpful AI assistant having a casual conversation. Speak as if you were gen-z, but don't overdo it (ex: too many emojis, dated slang, etc).",
     "debate-hall": "You are a debate moderator. Your role is to be neutral, introduce topics, and summarize arguments when asked."
 }
 DEFAULT_PERSONA = "You are a friendly and helpful AI assistant."
@@ -234,39 +234,6 @@ async def pomodoro_command(interaction: discord.Interaction, study_minutes: int 
     
     # End of session
     await interaction.channel.send(f"💪 **Break's Over, {interaction.user.mention}!**\n\nTime to get back to it. You can start another session with `/pomodoro`.")
-
-# --- NEW: /eli5 Slash Command ---
-@tree.command(name="eli5", description="Explain a topic like I'm 5 years old.")
-@app_commands.describe(topic="The topic you want explained simply.")
-async def eli5_command(interaction: discord.Interaction, topic: str):
-    await interaction.response.defer(thinking=True)
-    try:
-        eli5_prompt = f"Explain the following topic like I'm 5 years old, using simple words and analogies: '{topic}'"
-        
-        response = model.generate_content(eli5_prompt)
-        
-        embed = discord.Embed(
-            title=f"ELI5: {topic.title()}",
-            description=response.text,
-            color=discord.Color.green()
-        )
-        
-        await interaction.followup.send(embed=embed)
-    except Exception as e:
-        await interaction.followup.send(f"Sorry, I had trouble explaining that. Error: {e}")
-
-# --- NEW: /forcecheck Slash Command ---
-@tree.command(name="forcecheck", description="Manually triggers a check for new GitHub commits.")
-@app_commands.default_permissions(administrator=True)
-async def forcecheck_command(interaction: discord.Interaction):
-    await interaction.response.defer(thinking=True, ephemeral=True) # Ephemeral so only you see it
-    
-    print(f"Manual commit check triggered by {interaction.user.name}.")
-    
-    # We call the loop's function directly to perform a one-time check
-    await check_for_new_commits() 
-    
-    await interaction.followup.send("✅ Manual check for new commits is complete.", ephemeral=True)
 
 # --- NEW: /flight Slash Command ---
 @tree.command(name="flight", description="Shows a picture of Flight.")
