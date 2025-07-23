@@ -2,6 +2,7 @@ import discord
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
+from discord import app_commands # Import app_commands for slash commands
 
 # --- Configuration & Setup ---
 print("Script started. Loading environment variables...")
@@ -36,12 +37,30 @@ DEFAULT_PERSONA = "You are a friendly and helpful AI assistant."
 intents = discord.Intents.default()
 intents.message_content = True
 bot = discord.Client(intents=intents)
+tree = app_commands.CommandTree(bot) # Initialize the CommandTree
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name} ({bot.user.id})')
     print('Bot is online with thread-based debate features.')
+    print('Syncing slash commands...')
+    await tree.sync() # Sync slash commands when the bot is ready
+    print('Slash commands synced successfully.')
     print('----------------------------------------------------')
+
+# --- NEW: /ask Slash Command ---
+@tree.command(name="ask", description="Get a quick one to two sentence answer to your question.")
+@app_commands.describe(question="The question you want to ask.")
+async def ask_command(interaction: discord.Interaction, question: str):
+    await interaction.response.defer(thinking=True) # Acknowledge the command quickly
+    try:
+        # Prompt for a concise, 1-2 sentence answer
+        quick_answer_prompt = f"You are a helpful AI assistant. Provide a one to two sentence answer to the following question: '{question}'"
+        response = model.generate_content(quick_answer_prompt)
+        await interaction.followup.send(response.text)
+    except Exception as e:
+        await interaction.followup.send(f"Sorry, I couldn't answer that question right now. Error: {e}")
+
 
 @bot.event
 async def on_message(message: discord.Message):
