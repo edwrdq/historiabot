@@ -185,15 +185,31 @@ Do not write the full essay. Focus on providing a logical structure and actionab
 The user's essay prompt is: '{prompt}'
 """
         response = model.generate_content(outline_prompt)
+        response_text = response.text
+        
+        # Discord's character limit for embeds is 4096
+        char_limit = 4096
         
         embed = discord.Embed(
             title=f"Essay Outline: \"{prompt[:200]}\"", # Truncate prompt for title
-            description=response.text,
             color=discord.Color.purple()
         )
         embed.set_footer(text="Use this outline as a guide to structure your writing.")
-        
-        await interaction.followup.send(embed=embed)
+
+        # If the text is within the limit, send it in one go.
+        if len(response_text) <= char_limit:
+            embed.description = response_text
+            await interaction.followup.send(embed=embed)
+        else:
+            # If the text is too long, split it and send in multiple messages.
+            embed.description = "The generated outline is too long for a single message. Here it is in parts:"
+            await interaction.followup.send(embed=embed)
+            
+            # Split the text into chunks
+            for i in range(0, len(response_text), char_limit):
+                chunk = response_text[i:i + char_limit]
+                await interaction.channel.send(chunk)
+
     except Exception as e:
         await interaction.followup.send(f"Sorry, I had trouble generating that outline. Error: {e}")
 
