@@ -1,6 +1,7 @@
 import discord
 import google.generativeai as genai
 import os
+import asyncio
 from discord.ext import tasks
 from dotenv import load_dotenv
 from discord import app_commands # Import app_commands for slash commands
@@ -212,6 +213,34 @@ The user's essay prompt is: '{prompt}'
 
     except Exception as e:
         await interaction.followup.send(f"Sorry, I had trouble generating that outline. Error: {e}")
+
+# --- NEW: /pomodoro Slash Command ---
+@tree.command(name="pomodoro", description="Start a Pomodoro study timer.")
+@app_commands.describe(study_minutes="How long you want to study for (default: 25).", break_minutes="How long of a break you want (default: 5).")
+async def pomodoro_command(interaction: discord.Interaction, study_minutes: int = 25, break_minutes: int = 5):
+    await interaction.response.send_message(f"🍅 **Pomodoro Timer Started!**\n\nTime to focus, {interaction.user.mention}! Your **{study_minutes}-minute** study session has begun. I'll let you know when it's time for a break.")
+    
+    # Convert minutes to seconds for asyncio.sleep
+    study_seconds = study_minutes * 60
+    break_seconds = break_minutes * 60
+    
+    # Study period
+    await asyncio.sleep(study_seconds)
+    
+    # Break period
+    await interaction.channel.send(f"🎉 **Break Time, {interaction.user.mention}!**\n\nGreat work! Your **{break_minutes}-minute** break starts now. Relax and recharge!")
+    
+    await asyncio.sleep(break_seconds)
+    
+    # End of session
+    await interaction.channel.send(f"💪 **Break's Over, {interaction.user.mention}!**\n\nTime to get back to it. You can start another session with `/pomodoro`.")
+
+# --- NEW: /flight Slash Command ---
+@tree.command(name="flight", description="Shows a picture of Flight.")
+async def flight_command(interaction: discord.Interaction):
+    embed = discord.Embed(color=discord.Color.blue())
+    embed.set_image(url="https://cdn.discordapp.com/attachments/1397346577458270409/1397458909274439711/images.png?ex=6881cc87&is=68807b07&hm=9c151c18d093f262f0358c56c113ab81fda99ddfbae77f17afa4f146b6d7cb34&")
+    await interaction.response.send_message(embed=embed)
 
 
 @bot.event
