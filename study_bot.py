@@ -279,5 +279,6 @@ async def on_message(message: discord.Message):
                 await message.reply(f"Sorry, I encountered an error trying to respond. {e}", mention_author=True)
 
 # --- Running the Bot ---
+# Test commit
 print("All setup complete. Attempting to connect to Discord...")
 bot.run(DISCORD_BOT_TOKEN)
