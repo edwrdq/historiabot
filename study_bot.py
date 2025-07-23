@@ -162,6 +162,41 @@ async def ask_command(interaction: discord.Interaction, question: str):
     except Exception as e:
         await interaction.followup.send(f"Sorry, I couldn't answer that question right now. Error: {e}")
 
+# --- NEW: /outline Slash Command ---
+@tree.command(name="outline", description="Generate a structured essay outline for a given prompt.")
+@app_commands.describe(prompt="The essay prompt you want an outline for.")
+async def outline_command(interaction: discord.Interaction, prompt: str):
+    await interaction.response.defer(thinking=True)
+    try:
+        # A detailed prompt to guide the AI in creating a high-quality outline
+        outline_prompt = f"""
+You are an expert academic writing assistant. Your task is to generate a clear, structured, and helpful essay outline based on the user's prompt.
+
+The outline must include the following components:
+1.  **Thesis Statement:** A strong, arguable thesis statement that directly answers the prompt.
+2.  **Introduction:** A brief suggestion for a hook to grab the reader's attention.
+3.  **Body Paragraphs (3-4):**
+    *   A clear topic sentence for each paragraph.
+    *   Bulleted points suggesting specific evidence, examples, or arguments to include.
+4.  **Conclusion:** A suggestion for how to summarize the main points and restate the thesis.
+
+Do not write the full essay. Focus on providing a logical structure and actionable points.
+
+The user's essay prompt is: '{prompt}'
+"""
+        response = model.generate_content(outline_prompt)
+        
+        embed = discord.Embed(
+            title=f"Essay Outline: \"{prompt[:200]}\"", # Truncate prompt for title
+            description=response.text,
+            color=discord.Color.purple()
+        )
+        embed.set_footer(text="Use this outline as a guide to structure your writing.")
+        
+        await interaction.followup.send(embed=embed)
+    except Exception as e:
+        await interaction.followup.send(f"Sorry, I had trouble generating that outline. Error: {e}")
+
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -279,6 +314,5 @@ async def on_message(message: discord.Message):
                 await message.reply(f"Sorry, I encountered an error trying to respond. {e}", mention_author=True)
 
 # --- Running the Bot ---
-# Test commit
 print("All setup complete. Attempting to connect to Discord...")
 bot.run(DISCORD_BOT_TOKEN)
