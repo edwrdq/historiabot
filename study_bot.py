@@ -1,18 +1,30 @@
 import discord
 import google.generativeai as genai
 import os
+from discord.ext import tasks
 from dotenv import load_dotenv
 from discord import app_commands # Import app_commands for slash commands
+import requests
 
 # --- Configuration & Setup ---
 print("Script started. Loading environment variables...")
 load_dotenv()
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 GEMMA_API_KEY = os.getenv('GEMMA_API_KEY')
+CHANGELOG_CHANNEL_ID = os.getenv('CHANGELOG_CHANNEL_ID')
+GITHUB_REPO = os.getenv('GITHUB_REPO')
 
 if not DISCORD_BOT_TOKEN or not GEMMA_API_KEY:
     print("!!! FATAL ERROR: Missing DISCORD_BOT_TOKEN or GEMMA_API_KEY in .env file.")
     exit()
+if not CHANGELOG_CHANNEL_ID or not GITHUB_REPO:
+    print("!!! WARNING: Missing CHANGELOG_CHANNEL_ID or GITHUB_REPO in .env file. Commit tracking will be disabled.")
+else:
+    try:
+        CHANGELOG_CHANNEL_ID = int(CHANGELOG_CHANNEL_ID)
+    except ValueError:
+        print("!!! FATAL ERROR: CHANGELOG_CHANNEL_ID in .env file is not a valid integer.")
+        exit()
 print("... Environment variables loaded successfully.")
 
 try:
@@ -39,6 +51,92 @@ intents.message_content = True
 bot = discord.Client(intents=intents)
 tree = app_commands.CommandTree(bot) # Initialize the CommandTree
 
+# --- GitHub Commit Tracking ---
+LAST_COMMIT_SHA = None
+
+def get_commit_emoji(commit_message):
+    """Returns an emoji based on the commit type."""
+    if commit_message.startswith("feat"):
+        return "✨"
+    elif commit_message.startswith("fix"):
+        return "🐛"
+    elif commit_message.startswith("docs"):
+        return "📚"
+    elif commit_message.startswith("style"):
+        return "💎"
+    elif commit_message.startswith("refactor"):
+        return "🔨"
+    elif commit_message.startswith("perf"):
+        return "🚀"
+    elif commit_message.startswith("test"):
+        return "🚨"
+    elif commit_message.startswith("chore"):
+        return "🔧"
+    else:
+        return "📝"
+
+@tasks.loop(minutes=10)
+async def check_for_new_commits():
+    global LAST_COMMIT_SHA
+    if not CHANGELOG_CHANNEL_ID or not GITHUB_REPO:
+        return # Don't run if the feature is not configured
+
+    try:
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/commits"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        commits = response.json()
+
+        if not commits:
+            return
+
+        latest_commit_sha = commits[0]['sha']
+
+        if LAST_COMMIT_SHA is None:
+            LAST_COMMIT_SHA = latest_commit_sha
+            print(f"Commit tracking initialized. Starting with commit: {latest_commit_sha[:7]}")
+            return
+
+        if latest_commit_sha != LAST_COMMIT_SHA:
+            new_commits = []
+            for commit in commits:
+                if commit['sha'] == LAST_COMMIT_SHA:
+                    break
+                new_commits.append(commit)
+
+            if new_commits:
+                channel = bot.get_channel(CHANGELOG_CHANNEL_ID)
+                if channel:
+                    print(f"Found {len(new_commits)} new commit(s). Sending to #{channel.name}.")
+                    for commit_data in reversed(new_commits):
+                        commit = commit_data['commit']
+                        author = commit['author']['name']
+                        message = commit['message']
+                        sha = commit_data['sha']
+                        url = commit_data['html_url']
+                        
+                        emoji = get_commit_emoji(message)
+                        title = message.splitlines()[0]
+
+                        embed = discord.Embed(
+                            title=f"{emoji} {title}",
+                            url=url,
+                            description=f"```\n{message}\n```\nby {author}",
+                            color=discord.Color.blue()
+                        )
+                        embed.set_footer(text=f"Commit: {sha[:7]}")
+                        await channel.send(embed=embed)
+                else:
+                    print(f"!!! ERROR: Could not find changelog channel with ID {CHANGELOG_CHANNEL_ID}")
+
+
+            LAST_COMMIT_SHA = latest_commit_sha
+
+    except requests.RequestException as e:
+        print(f"!!! WARNING: Could not fetch commits from GitHub: {e}")
+    except Exception as e:
+        print(f"!!! ERROR: An unexpected error occurred in the commit checker: {e}")
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name} ({bot.user.id})')
@@ -46,6 +144,9 @@ async def on_ready():
     print('Syncing slash commands...')
     await tree.sync() # Sync slash commands when the bot is ready
     print('Slash commands synced successfully.')
+    if CHANGELOG_CHANNEL_ID and GITHUB_REPO:
+        print("Starting commit tracking loop...")
+        check_for_new_commits.start()
     print('----------------------------------------------------')
 
 # --- NEW: /ask Slash Command ---
