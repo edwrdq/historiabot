@@ -18,3 +18,4 @@ __pycache__/
 # --- IDE / Editor specific files ---
 # Ignore VSCodium/VSCode configuration folder.
 .vscode/
+errors.md
