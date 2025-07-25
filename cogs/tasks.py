@@ -114,6 +114,21 @@ class Tasks(commands.Cog):
         except Exception as e:
             print(f"!!! ERROR: An unexpected error occurred in the commit checker: {e}")
 
+    @commands.command()
+    @commands.is_owner()
+    async def force_check(self, ctx: commands.Context):
+        """Manually triggers the GitHub commit check."""
+        await ctx.send("Manually triggering commit check...", delete_after=10)
+        await self.check_for_new_commits()
+        await ctx.send("Commit check complete.", delete_after=10)
+
+    @force_check.error
+    async def force_check_error(self, ctx: commands.Context, error):
+        if isinstance(error, commands.NotOwner):
+            await ctx.send("Sorry, only the bot owner can use this command.", delete_after=10)
+        else:
+            await ctx.send(f"An error occurred: {error}", delete_after=10)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Tasks(bot))
