@@ -20,7 +20,7 @@ These instructions will get you a copy of the project up and running on your loc
 - A Discord account and a bot token. You can find instructions on how to get a bot token [here](https://discordpy.readthedocs.io/en/stable/discord.html).
 - A Google Gemini API key. You can get one [here](https://makersuite.google.com/).
 
-### Installation
+### Installation (Local)
 
 1.  Clone the repo
     ```sh
@@ -84,3 +84,48 @@ To run the bot, execute the following command:
 ```sh
 python study_bot.py
 ```
+
+## Docker
+
+You can run the bot in a containerized environment using Docker.
+
+### Quick Start with Docker Compose
+
+1. Create a `.env` file in the project root with at least:
+   ```
+   DISCORD_BOT_TOKEN=your_discord_bot_token
+   GEMMA_API_KEY=your_gemma_api_key
+   # Optional features
+   # CHANGELOG_CHANNEL_ID=123456789012345678
+   # GITHUB_REPO=your_github_username/your_repo
+   ```
+2. Build and start the container in the background:
+   ```sh
+   docker compose up -d --build
+   ```
+3. View logs:
+   ```sh
+   docker compose logs -f
+   ```
+
+### Docker CLI (without Compose)
+
+Build the image:
+```sh
+docker build -t historiabot .
+```
+
+Run the container with your `.env` values:
+```sh
+docker run \
+  --name historiabot \
+  --env-file .env \
+  --restart unless-stopped \
+  historiabot
+```
+
+### Notes
+
+- The bot requires the Message Content Intent enabled in your Discord application settings since it responds to messages and mentions.
+- The project’s `.env` file is not copied into the container image, but it is used at runtime via Compose’s `env_file` or the `--env-file` flag.
+- For development convenience, you can live-edit code by uncommenting the `volumes` section in `docker-compose.yml`.

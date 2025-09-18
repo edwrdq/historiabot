@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  historiabot:
+    build: .
+    image: historiabot:latest
+    container_name: historiabot
+    restart: unless-stopped
+    # Pass environment via a local .env file (not committed)
+    env_file:
+      - .env
+    # For live-editing during development, uncomment the volume below
+    # volumes:
+    #   - ./:/app

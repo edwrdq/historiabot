@@ -1,0 +1,14 @@
+# Ignore local, dev, and VCS files when building Docker context
+.git
+.gitignore
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.vscode/
+
+# Do not include local env file in the image
+.env
+
+# Misc
+errors.md
